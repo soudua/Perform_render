@@ -53,7 +53,6 @@ const CalendarioModerno = () => {
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [clickedDate, setClickedDate] = useState<Date | null>(null);
 
   const [eventForm, setEventForm] = useState({
     title: '',
@@ -113,7 +112,6 @@ const CalendarioModerno = () => {
 
   const handleDateClick = (date: Date): void => {
     const formatted = formatDate(date);
-    setClickedDate(date);
     setEventForm({
       title: '',
       startDate: formatted,

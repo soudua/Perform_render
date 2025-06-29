@@ -113,10 +113,6 @@ export default function RegistoHoras() {
     }
   }, [selectedGrupo]);
 
-  const handleButtonClick = (buttonName: ContentMapKey) => {
-    setActiveButton(buttonName);
-  };
-
   const handleRegistar = async () => {
     if (!userId || !inicio || !fim) {
       alert('Por favor, preencha os campos obrigatórios (data início e fim)');

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import axios from 'axios';
 import { createApiUrl, apiConfig } from '../utils/apiConfig';
-import { Clock, Calendar, User, UserX } from 'lucide-react';
+import { Clock, Calendar, User, UserX, LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Helper to format decimal hours to 'H:MM (Xm)'
@@ -14,8 +14,17 @@ function formatHoursToHM(decimalHours: number | string | null | undefined): stri
   return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
 }
 
+// Interface for DataCard props
+interface DataCardProps {
+  icon: LucideIcon;
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  color?: string;
+}
+
 // Componente para cartão de dados
-const DataCard = ({ icon: Icon, title, value, subtitle, color = "blue" }) => (
+const DataCard = ({ icon: Icon, title, value, subtitle, color = "blue" }: DataCardProps) => (
   <div className={`bg-gradient-to-br from-${color}-50 to-${color}-100 p-6 rounded-2xl border border-${color}-200 shadow-sm hover:shadow-md transition-all duration-300`}>
     <div className="flex items-center justify-between">
       <div>
@@ -75,13 +84,6 @@ export default function Display() {
       }
     }
   }, [userId, activeTab]);
-
-  const totalHours = activeTab === 'horas' 
-    ? rows.reduce((acc, row) => {
-        const hours = parseFloat(row.totalHoras?.replace(/[^\d.]/g, '') || '0');
-        return acc + hours;
-      }, 0)
-    : 0;
 
   return (
     <AnimatePresence>

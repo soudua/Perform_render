@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { LineChart } from '@mui/x-charts/LineChart';
 import axios from 'axios';
 import { apiConfig, createApiUrl } from '../utils/apiConfig';
@@ -6,7 +6,6 @@ import { apiConfig, createApiUrl } from '../utils/apiConfig';
 export default function PerformClientes() {
   const [selectedProject, setSelectedProject] = useState("");
   const [activeView, setActiveView] = useState('Geral');
-  const [animatedValues, setAnimatedValues] = useState({});
   const [projects, setProjects] = useState<string[]>([]);
   const [teamMembers, setTeamMembers] = useState<Array<{ user_id: number; First_Name: string; Last_Name: string }>>([]);
   const [totalProjectHours, setTotalProjectHours] = useState<number>(0);
@@ -139,14 +138,6 @@ export default function PerformClientes() {
     fetchMonthlyRisks();
   }, [selectedProject]);
 
-  const teamData = [
-    { name: 'Duarte', hours: 159, efficiency: 85, cost: 3500 },
-    { name: 'João', hours: 237, efficiency: 92, cost: 4200 },
-    { name: 'Joana', hours: 262, efficiency: 78, cost: 4800 },
-    { name: 'Carlos', hours: 305, efficiency: 88, cost: 5500 },
-    { name: 'Diana', hours: 356, efficiency: 95, cost: 6200 },
-  ];
-
   const projectMetrics = {
     budget: 50000,
     spent: 32000,
@@ -154,14 +145,6 @@ export default function PerformClientes() {
     risk: 'low',
     cpi: 0.8
   };
-
-  useEffect(() => {
-    setAnimatedValues({
-      totalHours: teamData.reduce((sum, member) => sum + member.hours, 0),
-      avgEfficiency: Math.round(teamData.reduce((sum, member) => sum + member.efficiency, 0) / teamData.length),
-      totalCost: teamData.reduce((sum, member) => sum + member.cost, 0)
-    });
-  }, []);
 
   const CircularProgress = ({ percentage, size = 120, strokeWidth = 8, color = "#3b82f6" }: { percentage: number; size?: number; strokeWidth?: number; color?: string }) => {
     const radius = (size - strokeWidth) / 2;
