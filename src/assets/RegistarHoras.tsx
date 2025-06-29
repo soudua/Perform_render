@@ -14,7 +14,6 @@ import { createApiUrl, apiConfig } from '../utils/apiConfig';
 type Cliente = { id?: number; nome?: string; label?: string; name?: string };
 type Group = { id?: number; nome?: string; label?: string; name?: string };
 type Category = { id?: number; nome?: string; label?: string; name?: string };
-type ContentMapKey = 'registar';
 
 const tipo = [
   { label: '1', id: 1 },
@@ -26,7 +25,6 @@ export default function RegistoHoras() {
 
   const [userId, setUserId] = useState<number | null>(null);
   const [groupId, setGroupId] = useState<number | null>(null);
-  const [activeButton, setActiveButton] = useState<ContentMapKey>('registar');
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [clientesLoading, setClientesLoading] = useState(false);
   const [grupos, setGrupos] = useState<Group[]>([]);
@@ -459,7 +457,7 @@ export default function RegistoHoras() {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {contentMap[activeButton].content}
+        {contentMap.registar.content}
       </motion.div>
     </AnimatePresence>
   );
