@@ -229,14 +229,9 @@ async function setupProductionPasswords(db) {
       console.log('✅ Admin user created successfully');
     }
     
-    // Ensure Duarte's password is set correctly
-    const duarteUser = await db.get('SELECT * FROM utilizadores WHERE email = ?', ['soudua@hotmail.com']);
-    if (duarteUser) {
-      const duartePassword = '1234';
-      const duarteHashed = await bcrypt.hash(duartePassword, 10);
-      await db.run('UPDATE utilizadores SET password = ? WHERE email = ?', [duarteHashed, 'soudua@hotmail.com']);
-      console.log('✅ User passwords configured');
-    }
+    // Note: User passwords should be set through proper admin interface
+    // Hardcoded password initialization removed for security
+    console.log('✅ Database initialization complete');
     
   } catch (error) {
     console.error('❌ Error setting up passwords:', error);

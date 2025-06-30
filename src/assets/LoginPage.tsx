@@ -1,15 +1,23 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "./contexts/UserContext";
 import { createApiUrl, apiConfig } from "../utils/apiConfig";
 
 function LoginPage() {
-  const [username, setUsername] = useState("soudua@hotmail.com");
-  const [password, setPassword] = useState("1234"); // Replace with your actual password
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const navigate = useNavigate();
   const { setUsername: setUsernameContext } = useContext(UserContext);
+
+  // Clear any stored credentials on component mount for security
+  useEffect(() => {
+    localStorage.removeItem('username');
+    localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('rememberMe');
+  }, []);
 
   const handleLogin = async () => {
     setLoginError("");
@@ -67,7 +75,12 @@ function LoginPage() {
             className="border flex-1 px-2 py-1 mr-2 rounded"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Username..."
+            placeholder="Enter your email..."
+            type="email"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
           />
         </div>
         <div className="text-lg font-bold mb-1">Password</div>
@@ -77,7 +90,11 @@ function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password..."
+            placeholder="Enter your password..."
+            autoComplete="new-password"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
           />
         </div>
         <div className="pt-4 pr-8 content-center flex flex-col items-center">

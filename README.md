@@ -9,8 +9,7 @@ A full-stack time tracking application built with React/TypeScript frontend and 
 
 ## 🔑 Login Credentials
 
-- **User**: `soudua@hotmail.com` / Password: `1234`
-- **Admin**: `suporte@grupoerre.pt` / Password: `admin123`
+Contact your administrator for login credentials.
 
 ## 🚀 Features
 
