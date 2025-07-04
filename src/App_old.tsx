@@ -13,6 +13,22 @@ import Configurações from './assets/Configurações';
 import GitHub from './assets/GitHub';
 import { useEffect } from 'react';
 
+
+import './App.css';
+import LoginPage from './assets/LoginPage';
+import MainPage from './assets/MainPage';
+import RegistarHoras from './assets/RegistarHoras';
+import Display from './assets/Display';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import Calendario from './assets/Calendario';
+import { UserProvider } from './assets/contexts/UserContext';
+import Pessoal from './assets/Pessoal';
+import SettingsPerfil from './assets/contexts/SettingsPerfil';
+import PerformClientes from './assets/PerformClientes';
+import Configurações from './assets/Configurações';
+import GitHub from './assets/GitHub';
+import { useEffect } from 'react';
+
 function AppContent() {
   const location = useLocation();
   

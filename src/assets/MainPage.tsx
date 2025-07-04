@@ -9,13 +9,14 @@ import {
   faGear,
   faChartSimple,
   faSignOut,
-  faChevronRight
+  faChevronRight,
+  
 } from '@fortawesome/free-solid-svg-icons';
 import { UserContext } from "./contexts/UserContext";
 import axios from "axios";
 import { createApiUrl, apiConfig } from "../utils/apiConfig";
-
-type TabType = 'Registar' | 'Calendário' | 'Settings' | 'Diagramas' | null;
+import { faGithub } from '@fortawesome/free-brands-svg-icons';
+type TabType = 'Registar' | 'Calendário' | 'Settings' | 'Diagramas' | 'GitHub' | null;
 
 export default function PersistentTabBar() {
   const [activeTab, setActiveTab] = useState<TabType>(null);
@@ -129,8 +130,15 @@ export default function PersistentTabBar() {
     } else if (tab === 'Diagramas') {
       if (label === 'My Perform') route = '/main/diagramas/MyPerform';
       else if (label === 'Relatórios') route = '/main/diagramas/relatorios';
+    } else if (tab === 'GitHub') {
+      console.log('🔍 GitHub navigation triggered!', { tab, label });
+      if (label === 'Github Projetos') {
+        route = '/main/gitHub/githubprojetos';
+        console.log('✅ GitHub route set:', route);
+      }
     }
 
+    console.log('🚀 Navigating to route:', route);
     navigate(route);
     setShowPopup(false);
     setActiveTab(null);
@@ -141,6 +149,7 @@ export default function PersistentTabBar() {
     { tab: 'Calendário', icon: faCalendarDays, label: 'Calendário', children: ['Visualizar'] },
     { tab: 'Settings', icon: faGear, label: 'Settings', children: ['Perfil', 'Configurações'] },
     { tab: 'Diagramas', icon: faChartSimple, label: 'Diagramas', children: ['My Perform', 'Relatórios'] },
+    { tab: 'GitHub', icon: faGithub, label: 'GitHub', children: ['Github Projetos'] },
   ];
 
   useEffect(() => {

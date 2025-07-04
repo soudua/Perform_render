@@ -59,6 +59,7 @@ export default function CRUDAdmin() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   // Define form fields for each entity type
   const getFormFields = (): FormField[] => {
@@ -115,8 +116,51 @@ export default function CRUDAdmin() {
     }
   };
 
+  // Filter entity data based on search term
+  const getFilteredEntityData = (): EntityType[] => {
+    const data = getEntityData();
+    
+    if (!searchTerm.trim()) {
+      return data;
+    }
+
+    return data.filter((item) => {
+      const searchLower = searchTerm.toLowerCase();
+      
+      // Search by name for all entities
+      if (item.name?.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+      
+      // Additional search fields based on entity type
+      switch (activeTab) {
+        case 'clientes':
+          const client = item as Client;
+          return client.email?.toLowerCase().includes(searchLower) ||
+                 client.contact?.toLowerCase().includes(searchLower);
+                 
+        case 'projetos':
+          const project = item as Project;
+          return project.project_type?.toLowerCase().includes(searchLower) ||
+                 project.project_description?.toLowerCase().includes(searchLower) ||
+                 project.status?.toLowerCase().includes(searchLower);
+                 
+        case 'utilizadores':
+          const user = item as User;
+          return user.email?.toLowerCase().includes(searchLower) ||
+                 user.last_name?.toLowerCase().includes(searchLower);
+                 
+        default:
+          return false;
+      }
+    });
+  };
+
   // Fetch data based on active tab
   useEffect(() => {
+    // Clear search when switching tabs
+    setSearchTerm('');
+    
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -301,17 +345,18 @@ export default function CRUDAdmin() {
     setError(null);
   };
 
-  const entityData = getEntityData();
+  const entityData = getFilteredEntityData();
 
   return (
     <div className="container mx-auto p-4">
+      {/* Tab Navigation */}
       <div className="flex space-x-4 mb-4">
         {['clientes', 'projetos', 'utilizadores'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab as Entity)}
-            className={`px-4 py-2 rounded focus:outline-none ${
-              activeTab === tab ? 'bg-blue-500 text-white' : 'bg-gray-200'
+            className={`px-4 py-2 rounded focus:outline-none transition-colors ${
+              activeTab === tab ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
             }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -325,6 +370,7 @@ export default function CRUDAdmin() {
         </div>
       )}
 
+      {/* Add/Edit Form */}
       <div className="bg-white shadow rounded p-4 mb-4">
         <h2 className="text-xl font-bold mb-4">
           {editingId ? `Editar ${activeTab.slice(0, -1)}` : `Adicionar ${activeTab.slice(0, -1)}`}
@@ -392,30 +438,81 @@ export default function CRUDAdmin() {
         </form>
       </div>
 
+      {/* Search Section */}
+      <div className="bg-white shadow rounded p-4 mb-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Lista de {activeTab}</h2>
+          <div className="flex items-center space-x-2">
+            <label htmlFor="search" className="text-sm font-medium text-gray-700">
+              Pesquisar:
+            </label>
+            <div className="relative">
+              <input
+                id="search"
+                type="text"
+                placeholder={`Buscar ${activeTab === 'clientes' ? 'cliente' : activeTab === 'projetos' ? 'projeto' : 'usuário'}...`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {searchTerm && (
+          <div className="mb-4 text-sm text-gray-600">
+            Encontrados {entityData.length} resultado(s) para "{searchTerm}"
+          </div>
+        )}
+
       {loading ? (
-        <div>Carregando...</div>
+        <div className="text-center py-8">
+          <div className="inline-flex items-center">
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Carregando...
+          </div>
+        </div>
       ) : (
-        <div className="bg-white shadow rounded p-4">
-          <h2 className="text-xl font-bold mb-4">Lista de {activeTab}</h2>
+        <>
           {entityData.length === 0 ? (
-            <div>Nenhum registro encontrado.</div>
+            <div className="text-center py-8 text-gray-500">
+              {searchTerm ? `Nenhum resultado encontrado para "${searchTerm}"` : 'Nenhum registro encontrado.'}
+            </div>
           ) : (
             <table className="min-w-full">
               <thead>
-                <tr>
+                <tr className="bg-gray-50">
                   {getFormFields()
                     .filter(field => field.key !== 'password')
                     .map((field) => (
-                      <th key={field.key} className="px-4 py-2 text-left">
+                      <th key={field.key} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         {field.label}
                       </th>
                     ))}
-                  <th className="px-4 py-2">Ações</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white divide-y divide-gray-200">
                 {entityData.map((item) => (
-                  <tr key={item.id} className="border-t">
+                  <tr key={item.id} className="hover:bg-gray-50">
                     {getFormFields()
                       .filter(field => field.key !== 'password')
                       .map((field) => {
@@ -426,21 +523,21 @@ export default function CRUDAdmin() {
                           value = roleOption?.label || value;
                         }
                         return (
-                          <td key={field.key} className="px-4 py-2">
+                          <td key={field.key} className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                             {value?.toString() || ''}
                           </td>
                         );
                       })}
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
                       <button
                         onClick={() => handleEdit(item)}
-                        className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mr-2"
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded mr-2 transition-colors"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDelete(item.id)}
-                        className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                        className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded transition-colors"
                       >
                         Excluir
                       </button>
@@ -450,8 +547,9 @@ export default function CRUDAdmin() {
               </tbody>
             </table>
           )}
-        </div>
+        </>
       )}
+      </div>
     </div>
   );
 }
