@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import usersRoutes from './routes/users.js';
@@ -16,7 +17,10 @@ import projectRiskByMonthRoutes from './routes/projectRiskByMonth.js';
 import adminClientsRoutes from './routes/adminClients.js';
 import adminProjectsRoutes from './routes/adminProjects.js';
 import adminUsersRoutes from './routes/adminUsers.js';
+import emailRoutes from './routes/email.js';
+import githubRoutes from './routes/github.js';
 import { initDb } from './routes/db.js';
+
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -84,6 +88,8 @@ app.use('/api/project-risk-by-month', projectRiskByMonthRoutes);
 app.use('/api/admin/clients', adminClientsRoutes);
 app.use('/api/admin/projects', adminProjectsRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
+app.use('/api/email', emailRoutes);
+app.use('/api/github', githubRoutes);
 
 async function forceAdminPasswordReset() {
   if (process.env.NODE_ENV === 'production') {

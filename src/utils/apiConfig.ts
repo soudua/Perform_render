@@ -58,7 +58,18 @@ export const apiConfig = {
     absences: '/api/absences',
     userAbsences: '/api/absences/user-absences',
     userMonthHours: '/api/absences/user-month-hours',
-    projectUsers: '/api/project-users/' // expects /api/project-users/:projectName
+    projectUsers: '/api/project-users/', // expects /api/project-users/:projectName
+    
+    // GitHub routes
+    githubConfigure: '/api/github/configure',
+    githubSearchRepos: '/api/github/search/repos',
+    githubRepo: '/api/github/repo',
+    githubBranches: '/api/github/branches',
+    githubCommits: '/api/github/commits',
+    githubCommit: '/api/github/commit',
+    githubContent: '/api/github/content',
+    githubCompare: '/api/github/compare',
+    githubAnalyze: '/api/github/analyze'
   }
 };
 

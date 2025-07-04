@@ -393,9 +393,9 @@ export default function RegistoHoras() {
               className="text-center"
             >
               <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-2">
-                Registro de Horas
+                Registo de Horas
               </h1>
-              <p className="text-slate-600 text-lg">Gerencie seu tempo de forma eficiente</p>
+              <p className="text-slate-600 text-lg">Organiza o teu tempo de forma eficiente</p>
             </motion.div>
           </div>
 
@@ -641,7 +641,7 @@ export default function RegistoHoras() {
                   <svg className="w-6 h-6 mr-3 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  Registrar Horas
+                  Registar Horas
                 </span>
                 {/* Hover Overlay Effect */}
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
