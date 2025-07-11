@@ -1,5 +1,7 @@
 import express from 'express';
 import { Octokit } from '@octokit/rest';
+import { getDb } from './db.js';
+import axios from 'axios';
 
 const router = express.Router();
 
@@ -171,6 +173,33 @@ router.get('/branches/:owner/:repo', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+// Get user's GitHub account from the database
+router.get('/user-account', async (req, res) => {
+    try {
+        const db = await getDb();
+        const user = await db.get('SELECT github_account FROM utilizadores WHERE user_id = ?', [67]);
+        
+        // Log the retrieved user and account for debugging
+        console.log('Database query result for user_id 67:', user);
+
+        if (user && user.github_account) {
+            let githubAccount = user.github_account;
+            // Remove trailing slash if it exists
+            if (githubAccount.endsWith('/')) {
+                githubAccount = githubAccount.slice(0, -1);
+            }
+            console.log('Found and formatted GitHub account:', githubAccount);
+            res.json({ github_account: githubAccount });
+        } else {
+            console.log('GitHub account not found for user_id 67.');
+            res.status(404).json({ error: 'GitHub account not found for this user.' });
+        }
+    } catch (error) {
+        console.error('Failed to fetch GitHub account:', error);
+        res.status(500).json({ error: 'Failed to fetch GitHub account from database.' });
+    }
 });
 
 // Search repositories
@@ -545,5 +574,168 @@ function generateRecommendations(commitType, fileAnalysis) {
   
   return recommendations;
 }
+
+// POST /api/github/company-commits
+// Body: { repos: [{ owner: string, name: string }], token: string, project_name: string }
+router.post('/company-commits', async (req, res) => {
+  const { repos, token, project_name } = req.body;
+  console.log('🔔 /company-commits called with:', { reposCount: repos?.length, project_name });
+  if (!repos || !Array.isArray(repos) || !token || !project_name) {
+    console.log('❌ Missing required fields:', { repos, token, project_name });
+    return res.status(400).json({ error: 'repos, token, and project_name required' });
+  }
+  const db = await getDb();
+  let result = {};
+  try {
+    for (const repo of repos) {
+      console.log('➡️ Processing repo:', repo);
+      const commitsRes = await axios.get(`https://api.github.com/repos/${repo.owner}/${repo.name}/commits`, {
+        headers: { Authorization: `token ${token}` },
+        params: { per_page: 100 }
+      });
+      for (const commit of commitsRes.data) {
+        const username = commit.author?.login || '';
+        if (!username) continue;
+        // Find user in DB
+        const user = await db.get('SELECT * FROM utilizadores WHERE LOWER(REPLACE(github_account, "/", "")) = LOWER(REPLACE(?, "/", ""))', username.replace(/\//g, ''));
+        if (!user) {
+          console.log('⚠️ No user found for GitHub username:', username);
+          continue;
+        }
+        if (!result[username]) result[username] = { user, commits: [] };
+        // Simulate AI summary (replace with real AI call if needed)
+        let aiSummary = `Commit: ${commit.commit.message}`;
+        // Store in DB (upsert by sha+user+project)
+        const project_id = 39; // Hardcode project_id for all commits
+        
+        try {
+          // Check if this exact commit already exists
+          const existingCommit = await db.get(`
+            SELECT * FROM github_commit_summaries 
+            WHERE commit_sha = ? AND user_id = ? AND project_id = ? AND commit_message = ? AND commit_date = ?`,
+            [commit.sha, user.user_id, project_id, commit.commit.message, commit.commit.author.date]
+          );
+
+          if (!existingCommit) {
+            try {
+              // Only insert if the commit doesn't exist
+              await db.run(`INSERT INTO github_commit_summaries (user_id, project_id, commit_sha, commit_message, commit_date, ai_summary, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+                [user.user_id, project_id, commit.sha, commit.commit.message, commit.commit.author.date, aiSummary]
+              );
+              console.log('✅ Inserted commit:', { user_id: user.user_id, project_name, sha: commit.sha });
+            } catch (dbErr) {
+              console.error('❌ DB insert error:', dbErr, { user_id: user.user_id, project_name, sha: commit.sha });
+            }
+          }
+
+          result[username].commits.push({
+            sha: commit.sha,
+            message: commit.commit.message,
+            date: commit.commit.author.date,
+            aiSummary
+          });
+        } catch (err) {
+          console.error('❌ Error processing commit:', err, { username, sha: commit.sha });
+        }
+      }
+    }
+    // For each user, count commits
+    const users = Object.values(result).map(u => ({
+      user: u.user,
+      commits: u.commits,
+      commitCount: u.commits.length
+    }));
+    res.json(users);
+  } catch (err) {
+    console.error('❌ Outer error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/github/commit-summaries?project_id=xxx
+router.get('/commit-summaries', async (req, res) => {
+  const { project_id } = req.query;
+  console.log('🔍 Fetching commit summaries for project_id:', project_id);
+  
+  if (!project_id) {
+    console.warn('⚠️ No project_id provided');
+    return res.status(400).json({ error: 'project_id required' });
+  }
+
+  const db = await getDb();
+  try {
+    console.log('🔄 Running SQL query for project_id:', project_id);
+    // Join with utilizadores and projects tables
+    const rows = await db.all(`
+      SELECT s.*, u.First_Name, u.Last_Name, u.github_account, p.project_name
+      FROM github_commit_summaries s
+      JOIN utilizadores u ON s.user_id = u.user_id
+      JOIN projects p ON s.project_id = p.project_id
+      WHERE s.project_id = ?
+      ORDER BY s.commit_date DESC
+    `, [project_id]);
+    
+    console.log('📊 Query results:', {
+      rowCount: rows.length,
+      firstRow: rows[0] ? {
+        user_id: rows[0].user_id,
+        name: `${rows[0].First_Name} ${rows[0].Last_Name}`,
+        commit_sha: rows[0].commit_sha
+      } : 'no rows'
+    });
+    // Group by user
+    const grouped = {};
+    console.log('🔄 Processing rows for grouping');
+    
+    for (const row of rows) {
+      if (!grouped[row.user_id]) {
+        console.log('👤 Creating new user group:', {
+          user_id: row.user_id,
+          name: `${row.First_Name} ${row.Last_Name}`,
+          github: row.github_account
+        });
+        
+        grouped[row.user_id] = {
+          user: {
+            user_id: row.user_id,
+            First_Name: row.First_Name,
+            Last_Name: row.Last_Name,
+            github_account: row.github_account
+          },
+          commits: [],
+          commitCount: 0
+        };
+      }
+      
+      grouped[row.user_id].commits.push({
+        sha: row.commit_sha,
+        message: row.commit_message,
+        date: row.commit_date,
+        aiSummary: row.ai_summary
+      });
+      grouped[row.user_id].commitCount++;
+    }
+    
+    const result = Object.values(grouped);
+    console.log('✅ Final result:', {
+      userCount: result.length,
+      users: result.map(u => ({
+        id: u.user.user_id,
+        name: `${u.user.First_Name} ${u.user.Last_Name}`,
+        commitCount: u.commitCount
+      }))
+    });
+    
+    res.json(result);
+  } catch (err) {
+    console.error('❌ Error in commit-summaries:', {
+      error: err.message,
+      stack: err.stack,
+      project_id
+    });
+    res.status(500).json({ error: err.message });
+  }
+});
 
 export default router;

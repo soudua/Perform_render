@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
-import { Search, GitBranch, GitCommit, Calendar, User, FileCode, Star, Eye, GitFork, ChevronRight, ChevronDown, RefreshCw, Settings, Bot, Diff } from 'lucide-react';
+import { Search, GitBranch, GitCommit, Calendar, User, FileCode, Star, Eye, GitFork, ChevronRight, ChevronDown, RefreshCw, Settings, Bot, Diff, Icon, Building2 } from 'lucide-react';
 import axios from 'axios';
 import { createApiUrl, apiConfig } from '../utils/apiConfig';
+import { icon } from '@fortawesome/fontawesome-svg-core';
 
 interface Repository {
   id: number;
@@ -76,13 +76,101 @@ function GitHub() {
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [companyRepositories, setCompanyRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [selectedBranch, setSelectedBranch] = useState<string>('main');
   const [activeTab, setActiveTab] = useState<'commits' | 'files' | 'diff' | 'ai-summary'>('commits');
+  const [searchTab, setSearchTab] = useState<'empresa' | 'procurar'>('procurar');
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
   const [aiSummary, setAiSummary] = useState<string>('');
   const [summaryLoading, setSummaryLoading] = useState<boolean>(false);
+  const [showLogoutPopup, setShowLogoutPopup] = useState<boolean>(false);
+  const [hoverTimeout, setHoverTimeout] = useState<number | null>(null);
+  const [companyCommitsByUser, setCompanyCommitsByUser] = useState<any[]>([]);
+
+  // Handle mouse enter for logout popup
+  const handleMouseEnter = () => {
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout);
+      setHoverTimeout(null);
+    }
+    setShowLogoutPopup(true);
+  };
+
+  // Handle mouse leave for logout popup with delay
+  const handleMouseLeave = () => {
+    const timeout = setTimeout(() => {
+      setShowLogoutPopup(false);
+    }, 200); // 200ms delay
+    setHoverTimeout(timeout);
+  };
+
+  // Fetch company repositories
+  const fetchCompanyRepositories = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      // First, get the github_account from the database
+      const userResponse = await axios.get(createApiUrl(apiConfig.endpoints.githubUserAccount));
+      const githubAccount = userResponse.data.github_account;
+
+      if (githubAccount) {
+        // Then, search for repositories from that user
+        const repoResponse = await axios.get(createApiUrl(apiConfig.endpoints.githubSearchRepos), {
+          params: { q: `user:${githubAccount}`, token }
+        });
+        setCompanyRepositories(repoResponse.data.items || []);
+      } else {
+        setError('GitHub account for user not found.');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to fetch company repositories');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch company commits by user
+  // Fetch company commits by user and store in DB
+  const fetchCompanyCommits = async (repos: Repository[]) => {
+    if (!token || !repos.length) return;
+    try {
+      // Get project name from PerformClientes localStorage (if available)
+      let projectName = localStorage.getItem('selectedProject') || '';
+      if (!projectName && window.location.hash.includes('project=')) {
+        projectName = decodeURIComponent(window.location.hash.split('project=')[1].split('&')[0]);
+      }
+      // If projectName is still not set, do nothing (wait for user to click the button to set it)
+      if (!projectName) {
+        // Do not show modal automatically
+        return;
+      }
+      const repoList = repos.map(r => ({ owner: r.owner.login, name: r.name }));
+      const response = await axios.post(createApiUrl(apiConfig.endpoints.githubCompanyCommits), {
+        repos: repoList,
+        token,
+        project_name: projectName
+      });
+      setCompanyCommitsByUser(response.data);
+      // No longer store in localStorage; data is in DB
+    } catch (err: any) {
+      setCompanyCommitsByUser([]);
+    }
+  };
+  // State for project name prompt
+  const [showProjectNamePrompt, setShowProjectNamePrompt] = useState<boolean>(false);
+  const [manualProjectName, setManualProjectName] = useState<string>('');
+
+  // Handler for confirming project name
+  const handleProjectNameConfirm = async () => {
+    if (!manualProjectName.trim()) return;
+    localStorage.setItem('selectedProject', manualProjectName);
+    setShowProjectNamePrompt(false);
+    setManualProjectName('');
+    // Re-run fetchCompanyCommits with the new project name
+    await fetchCompanyCommits(companyRepositories);
+  };
 
   // Load saved token on component mount
   useEffect(() => {
@@ -92,6 +180,31 @@ function GitHub() {
       setIsConfigured(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (searchTab === 'empresa' && isConfigured) {
+      fetchCompanyRepositories();
+    }
+  }, [searchTab, isConfigured]);
+
+  useEffect(() => {
+    if (searchTab === 'empresa' && isConfigured && companyRepositories.length > 0) {
+      fetchCompanyCommits(companyRepositories);
+    }
+    // eslint-disable-next-line
+  }, [searchTab, isConfigured, companyRepositories]);
+
+  // Handle logout
+  const handleLogout = () => {
+    setIsConfigured(false);
+    setToken('');
+    setCurrentRepo(null);
+    setRepositories([]);
+    setCommits([]);
+    setSelectedCommit(null);
+    localStorage.removeItem('github_token');
+    setShowLogoutPopup(false);
+  };
 
   // Configure GitHub token
   const configureGitHub = async () => {
@@ -303,25 +416,25 @@ function GitHub() {
           {line || ' '}
         </div>
       );
-    });
+  });
   };
 
   if (!isConfigured) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen flex items-center justify-center p-8">
         <div className="max-w-md mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="bg-[#5176a3] rounded-2xl shadow-2xl p-8 ">
             <div className="text-center mb-6">
-              <div className="mx-auto w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center mb-4">
+              <div className="mx-auto w-12 h-12 bg-black rounded-lg flex items-center justify-center mb-4">
                 <GitBranch className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">GitHub Integration</h1>
-              <p className="text-gray-600 mt-2">Connect your GitHub account to get started</p>
+              <h1 className="text-2xl font-bold text-black">GitHub Integration</h1>
+              <p className="text-white font-semibold mt-2">Connect your GitHub account to get started</p>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   GitHub Personal Access Token
                 </label>
                 <input
@@ -331,7 +444,7 @@ function GitHub() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="ghp_xxxxxxxxxxxxxxxxxx"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-white font-medium mt-1">
                   Create a token at GitHub Settings → Developer settings → Personal access tokens
                 </p>
               </div>
@@ -345,7 +458,7 @@ function GitHub() {
               <button
                 onClick={configureGitHub}
                 disabled={loading}
-                className="w-full bg-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-800 disabled:opacity-50 flex items-center justify-center"
+                className="w-full bg-gray-900 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-800 disabled:opacity-50 flex items-center justify-center"
               >
                 {loading ? (
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -362,66 +475,234 @@ function GitHub() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
+      {/* Project Name Prompt Modal */}
+      {showProjectNamePrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full">
+            <h2 className="text-lg font-bold mb-4">Enter Project Name</h2>
+            <input
+              type="text"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Project name for GitHub commit storage"
+              value={manualProjectName}
+              onChange={e => setManualProjectName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleProjectNameConfirm(); }}
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 bg-gray-200 rounded-md text-gray-700 hover:bg-gray-300"
+                onClick={() => { setShowProjectNamePrompt(false); setManualProjectName(''); }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-600 rounded-md text-white font-bold hover:bg-blue-700"
+                onClick={handleProjectNameConfirm}
+                disabled={!manualProjectName.trim()}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-[#5b92da] shadow-sm border-b rounded-3xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <GitBranch className="h-8 w-8 text-gray-900 mr-3" />
-              <h1 className="text-xl font-semibold text-gray-900">GitHub Integration</h1>
+              <GitBranch className="h-8 w-8 text-gray-50 mr-3" />
+              <h1 className="text-xl font-semibold text-gray-50">GitHub Integration</h1>
             </div>
-            <button
-              onClick={() => {
-                setIsConfigured(false);
-                setToken('');
-                setCurrentRepo(null);
-                setRepositories([]);
-                setCommits([]);
-                setSelectedCommit(null);
-                localStorage.removeItem('github_token');
-              }}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <Settings className="h-5 w-5" />
-            </button>
+            <div className="relative">
+              <button
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                className="text-gray-50 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition-colors"
+              >
+                <Settings className="h-5 w-5" />
+              </button>
+              
+              {/* Custom Logout Popup */}
+              {showLogoutPopup && (
+                <div 
+                  className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-64 z-50"
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <div className="text-sm text-gray-700 mb-3">
+                    Are you sure you want to log out of your existing GitHub key?
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors font-medium"
+                  >
+                    Log Out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+      <div className='mt-4'>
+  <div className='flex justify-center gap-3'>
+    <div className='flex'> {/*Box */}
+      <div className='w-[70px] lg:w-[180px] md:w-[100px] sm:w-[80px] h-[70px] lg:h-[150px] md:h-[120px] sm:h-[80px] bg-blue-400 rounded-2xl border-1 shadow-lg text-white text-[10px] sm:text-[12px] md:text-[12px] lg:text-[17px]  font-bold flex justify-center items-center flex-col'>
+        <div>Reposítorio</div>
+        <FileCode size={32} />
+      </div>
+    </div>
+    <div className='flex items-center'> {/*Arrow */}
+      <div className="w-6 h-[15px] bg-blue-500" />
+      <div className="w-0 h-0 border-t-[20px] border-b-[20px] border-l-[20px] border-t-transparent border-b-transparent border-l-blue-500" />
+    </div>
+    <div className='flex'> {/*Box */}
+      <div className='w-[70px] lg:w-[180px] md:w-[100px] sm:w-[80px] h-[70px] lg:h-[150px] md:h-[120px] sm:h-[80px] bg-blue-400 rounded-2xl border-1 shadow-lg text-white text-[10px] sm:text-[12px] md:text-[12px] lg:text-[17px]  font-bold flex justify-center items-center flex-col'>
+        <div>Commit</div>
+        <GitCommit size={32} />
+      </div>
+    </div>
+    <div className='flex items-center'> {/*Arrow */}
+      <div className="w-6 h-[15px] bg-blue-500" />
+      <div className="w-0 h-0 border-t-[20px] border-b-[20px] border-l-[20px] border-t-transparent border-b-transparent border-l-blue-500" />
+    </div>
+    <div className='flex'> {/*Box */}
+      <div className='w-[70px] lg:w-[180px] md:w-[100px] sm:w-[80px] h-[70px] lg:h-[150px] md:h-[120px] sm:h-[80px] bg-blue-400 rounded-2xl border-1 shadow-lg text-white text-[10px] sm:text-[12px] md:text-[12px] lg:text-[17px]  font-bold flex justify-center items-center flex-col'>
+        <div>AI</div>
+        <Bot size={32} />
+      </div>
+    </div>
+  </div>
+</div>
+
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!currentRepo ? (
           <div className="space-y-6">
             {/* Search */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-xl shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Search Repositories</h2>
-              <div className="flex space-x-4">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && searchRepositories()}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Search repositories..."
-                  />
-                </div>
-                <button
-                  onClick={searchRepositories}
-                  disabled={loading}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
-                >
-                  {loading ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Search className="h-4 w-4" />
-                  )}
-                </button>
+              <div className='flex justify-end'>
+              <button
+                    className="mb-4 border-2 border-blue-600 text-gray-500 px-4 py-2 rounded-md hover:bg-blue-600 hover:text-white font-bold"
+                    onClick={() => setShowProjectNamePrompt(true)}
+                  >
+                    Save Project
+                  </button>
+
+                  </div>
+              <div className="border-b border-gray-200 mb-4">
+                <nav className="-mb-px flex space-x-8">
+                  {[
+                    { id: 'procurar', label: 'Procurar', icon: Search },
+                    { id: 'empresa', label: 'Empresa', icon: Building2 }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setSearchTab(tab.id as 'empresa' | 'procurar')}
+                      className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+                        searchTab === tab.id
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <tab.icon className="h-4 w-4 mr-2" />
+                      {tab.label}
+                    </button>
+                  ))}
+                </nav>
               </div>
+
+              {searchTab === 'procurar' && (
+                <div>
+                  <div className="flex space-x-4">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && searchRepositories()}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Search repositories..."
+                      />
+                    </div>
+                    <button
+                      onClick={searchRepositories}
+                      disabled={loading}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:opacity-50 flex items-center"
+                    >
+                      {loading ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Search className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {searchTab === 'empresa' && (
+                <div>
+                  
+                  {loading ? (
+                    <div className="text-center py-8 text-gray-500">Loading...</div>
+                  ) : companyRepositories.length > 0 ? (
+                    <div className="bg-white rounded-lg shadow-sm mt-6">
+                      <div className="divide-y">
+                        {companyRepositories.map((repo) => (
+                          <div
+                            key={repo.id}
+                            className="p-6 hover:bg-gray-50 cursor-pointer transition-colors"
+                            onClick={() => loadRepository(repo)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center">
+                                  <h4 className="text-lg font-semibold text-blue-600 hover:text-blue-800">
+                                    {repo.full_name}
+                                  </h4>
+                                  {repo.language && (
+                                    <span className="ml-3 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                      {repo.language}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-gray-600 mt-1">{repo.description}</p>
+                                <div className="flex items-center mt-3 space-x-4 text-sm text-gray-500">
+                                  <div className="flex items-center">
+                                    <Star className="h-4 w-4 mr-1" />
+                                    {repo.stargazers_count}
+                                  </div>
+                                  <div className="flex items-center">
+                                    <GitFork className="h-4 w-4 mr-1" />
+                                    {repo.forks_count}
+                                  </div>
+                                  <div className="flex items-center">
+                                    <Calendar className="h-4 w-4 mr-1" />
+                                    {formatDate(repo.updated_at)}
+                                  </div>
+                                </div>
+                              </div>
+                              <ChevronRight className="h-5 w-5 text-gray-400" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      No company repositories found.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Repository Results */}
-            {repositories.length > 0 && (
+            {searchTab === 'procurar' && repositories.length > 0 && (
               <div className="bg-white rounded-lg shadow-sm">
                 <div className="p-6 border-b">
                   <h3 className="text-lg font-semibold text-gray-900">Search Results</h3>
@@ -487,9 +768,9 @@ function GitHub() {
                 </div>
                 <button
                   onClick={() => setCurrentRepo(null)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-white h-14 w-30 md:w-40 lg:w-40 sm:w-20 sm:h-20 font-bold bg-[#428ae2] rounded-3xl border-2 hover:bg-[#54b2ff]"
                 >
-                  ← Back to Search
+                  Back to Search
                 </button>
               </div>
               
@@ -541,6 +822,7 @@ function GitHub() {
               <div className="border-b border-gray-200">
                 <nav className="-mb-px flex space-x-8 px-6">
                   {[
+
                     { id: 'commits', label: 'Commits', icon: GitCommit },
                     { id: 'files', label: 'Files', icon: FileCode },
                     { id: 'diff', label: 'Diff', icon: Diff },
@@ -568,7 +850,7 @@ function GitHub() {
                     {commits.map((commit) => (
                       <div
                         key={commit.sha}
-                        className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                        className={`border rounded-lg p-4 cursor-pointer transition-colors hover:bg-sky-50 ${
                           selectedCommit?.sha === commit.sha
                             ? 'border-blue-500 bg-blue-50'
                             : 'border-gray-200 hover:border-gray-300'

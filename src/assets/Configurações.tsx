@@ -463,7 +463,7 @@ export default function CRUDAdmin() {
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center "
                 >
                   <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -497,9 +497,9 @@ export default function CRUDAdmin() {
               {searchTerm ? `Nenhum resultado encontrado para "${searchTerm}"` : 'Nenhum registro encontrado.'}
             </div>
           ) : (
-            <table className="min-w-full">
+            <table className="w-[100px] lg:w-[1500px] md:w-[500px] sm:w-[300px] ">
               <thead>
-                <tr className="bg-gray-50">
+                <tr className="bg-gray-50 ">
                   {getFormFields()
                     .filter(field => field.key !== 'password')
                     .map((field) => (
@@ -510,6 +510,7 @@ export default function CRUDAdmin() {
                   <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
+              
               <tbody className="bg-white divide-y divide-gray-200">
                 {entityData.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
@@ -531,13 +532,13 @@ export default function CRUDAdmin() {
                     <td className="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
                       <button
                         onClick={() => handleEdit(item)}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded mr-2 transition-colors"
+                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded mr-2 transition-colors"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDelete(item.id)}
-                        className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded transition-colors"
+                        className="border-2 border-red-500 text-gray-800  hover:bg-red-500 hover:text-white  font-bold py-1 px-3 rounded transition-colors"
                       >
                         Excluir
                       </button>
@@ -545,6 +546,7 @@ export default function CRUDAdmin() {
                   </tr>
                 ))}
               </tbody>
+              
             </table>
           )}
         </>
