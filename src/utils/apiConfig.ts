@@ -18,6 +18,7 @@ export const apiConfig = {
   endpoints: {    
     // Project routes
     allProjects: '/api/projects',
+    projectsWithGithub: '/api/projects/with-github',
     projectTotalHours: '/api/project-total-hours',
     projectTimeline: '/api/project-timeline',
     projectCost: '/api/project-cost',
@@ -67,9 +68,11 @@ export const apiConfig = {
     githubBranches: '/api/github/branches',
     githubCommits: '/api/github/commits',
     githubCommit: '/api/github/commit',
-    githubContent: '/api/github/content',
-    githubCompare: '/api/github/compare',
-    githubAnalyze: '/api/github/analyze'
+    githubAnalyze: '/api/github/analyze',
+    githubUserAccount: '/api/github/user-account',
+    githubUserByAccount: '/api/users/by-github/',
+    githubCompanyCommits: '/api/github/company-commits',
+    githubCommitSummaries: '/api/github/commit-summaries'
   }
 };
 

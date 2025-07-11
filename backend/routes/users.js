@@ -131,4 +131,22 @@ router.post('/change-password', async (req, res) => {
   }
 });
 
+// GET user by github_account (case-insensitive, with or without trailing slash)
+router.get('/by-github/:githubAccount', async (req, res) => {
+  const db = getDb();
+  let githubAccount = req.params.githubAccount;
+  if (!githubAccount) return res.status(400).json({ error: 'githubAccount required' });
+  githubAccount = githubAccount.replace(/\/$/, ''); // remove trailing slash
+  try {
+    const user = await db.get(
+      'SELECT * FROM utilizadores WHERE LOWER(REPLACE(github_account, "/", "")) = LOWER(REPLACE(?, "/", ""))',
+      githubAccount.replace(/\//g, '')
+    );
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
