@@ -3,8 +3,9 @@ services:  # Backend API Service
     name: pbe-duarte
     env: node
     plan: free
-    buildCommand: cd backend && npm install && chmod +x deploy-db.sh && ./deploy-db.sh
-    startCommand: cd backend && npm start
+    buildCommand: npm install && chmod +x deploy-db.sh && ./deploy-db.sh
+    startCommand: npm start
+    rootDir: ./backend
     envVars:
       - key: NODE_ENV
         value: production
