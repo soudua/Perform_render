@@ -1,7 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import Box from '@mui/joy/Box';
-import Slider from '@mui/joy/Slider';
 import { useOutletContext } from 'react-router-dom';
 import axios from 'axios';
 import { createApiUrl, apiConfig } from '../utils/apiConfig';
@@ -12,9 +10,8 @@ import Autocomplete from '@mui/joy/Autocomplete';
 
 export default function Pessoal() {
   const { user_id } = useOutletContext<{ user_id: number | null }>();
-  const [progressWidth, setProgressWidth] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(0); // 0-11 for Jan-Dec
+  const [, setProgressWidth] = useState(0);
+  const [selectedMonth] = useState(0); // 0-11 for Jan-Dec
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [projectOptions, setProjectOptions] = useState<{ label: string; id: number }[]>([]);
   const [selectedProject, setSelectedProject] = useState<{ label: string; id: number } | null>(null);
@@ -26,18 +23,6 @@ export default function Pessoal() {
   const [horasExtra, setHorasExtra] = useState<number>(0);
 
   const images = ['/graph2.png', '/piecharts1.png'];
-
-  const months = [
-    'Janeiro 2025', 'Fevereiro 2025', 'Março 2025', 'Abril 2025',
-    'Maio 2025', 'Junho 2025', 'Julho 2025', 'Agosto 2025',
-    'Setembro 2025', 'Outubro 2025', 'Novembro 2025', 'Dezembro 2025'
-  ];
-
-  function valueText(value: number) {
-    return months[value];
-  }
-
-  const clampedProgress = Math.min(100, Math.max(0, progressWidth));
 
   useEffect(() => {
     if (!user_id) return;

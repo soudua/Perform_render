@@ -466,7 +466,7 @@ export default function PerformClientes() {
         .then((res) => {
           console.log('✅ Received live commit data from GitHub:', {
             dataLength: Array.isArray(res.data) ? res.data.length : 'not an array',
-            users: res.data?.map(u => ({ 
+            users: res.data?.map((u: any) => ({ 
               name: `${u.user?.First_Name} ${u.user?.Last_Name}`, 
               commitCount: u.commitCount 
             })) || []

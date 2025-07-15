@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Search, GitBranch, GitCommit, Calendar, User, FileCode, Star, Eye, GitFork, ChevronRight, ChevronDown, RefreshCw, Settings, Bot, Diff, Icon, Building2 } from 'lucide-react';
+import { Search, GitBranch, GitCommit, Calendar, User, FileCode, Star, Eye, GitFork, ChevronRight, ChevronDown, RefreshCw, Settings, Bot, Diff, Building2 } from 'lucide-react';
 import axios from 'axios';
 import { createApiUrl, apiConfig } from '../utils/apiConfig';
-import { icon } from '@fortawesome/fontawesome-svg-core';
 
 interface Repository {
   id: number;
@@ -87,7 +86,7 @@ function GitHub() {
   const [summaryLoading, setSummaryLoading] = useState<boolean>(false);
   const [showLogoutPopup, setShowLogoutPopup] = useState<boolean>(false);
   const [hoverTimeout, setHoverTimeout] = useState<number | null>(null);
-  const [companyCommitsByUser, setCompanyCommitsByUser] = useState<any[]>([]);
+  const [, setCompanyCommitsByUser] = useState<any[]>([]);
 
   // Handle mouse enter for logout popup
   const handleMouseEnter = () => {

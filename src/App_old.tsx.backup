@@ -1,4 +1,4 @@
-import './App.css';
+﻿import './App.css';
 import LoginPage from './assets/LoginPage';
 import MainPage from './assets/MainPage';
 import RegistarHoras from './assets/RegistarHoras';
@@ -9,36 +9,18 @@ import { UserProvider } from './assets/contexts/UserContext';
 import Pessoal from './assets/Pessoal';
 import SettingsPerfil from './assets/contexts/SettingsPerfil';
 import PerformClientes from './assets/PerformClientes';
-import Configurações from './assets/Configurações';
-import GitHub from './assets/GitHub';
-import { useEffect } from 'react';
-
-
-import './App.css';
-import LoginPage from './assets/LoginPage';
-import MainPage from './assets/MainPage';
-import RegistarHoras from './assets/RegistarHoras';
-import Display from './assets/Display';
-import { Routes, Route, useLocation } from 'react-router-dom';
-import Calendario from './assets/Calendario';
-import { UserProvider } from './assets/contexts/UserContext';
-import Pessoal from './assets/Pessoal';
-import SettingsPerfil from './assets/contexts/SettingsPerfil';
-import PerformClientes from './assets/PerformClientes';
-import Configurações from './assets/Configurações';
+import ConfiguraÃ§Ãµes from './assets/ConfiguraÃ§Ãµes';
 import GitHub from './assets/GitHub';
 import { useEffect } from 'react';
 
 function AppContent() {
   const location = useLocation();
-  
   useEffect(() => {
-    console.log('🗺️ Route changed to:', location.pathname);
+    console.log('ðŸºï Route changed to:', location.pathname);
     if (location.pathname.includes('gitHub')) {
-      console.log('🎯 GitHub route detected!');
+      console.log('ðŸŽ GitHub route detected!');
     }
   }, [location.pathname]);
-
   return (
     <div className='custom-bg h-screen'>
       <Routes>
@@ -48,7 +30,7 @@ function AppContent() {
           <Route path='registar/display' element={<Display />} />
           <Route path='calendario' element={<Calendario />} />
           <Route path='settings/perfil' element={<SettingsPerfil />} />
-          <Route path='settings/configuracoes' element={<Configurações />} />
+          <Route path='settings/configuracoes' element={<ConfiguraÃ§Ãµes />} />
           <Route path='diagramas/MyPerform' element={<Pessoal />}/>
           <Route path='diagramas/relatorios' element={<PerformClientes />} />
           <Route path='gitHub/githubprojetos' element={<GitHub />} />
@@ -60,7 +42,7 @@ function AppContent() {
 
 function App() {
   return (
-    <UserProvider> 
+    <UserProvider>
       <AppContent />
     </UserProvider>
   );
