@@ -20,7 +20,10 @@ export const apiConfig = {
     allProjects: '/api/projects',
     projectsWithGithub: '/api/projects/with-github',
 <<<<<<< HEAD
+<<<<<<< HEAD
     projectGithubInfo: '/api/projects/github-info', // expects /:projectId
+=======
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
 =======
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
     projectTotalHours: '/api/project-total-hours',
@@ -77,8 +80,12 @@ export const apiConfig = {
     githubUserByAccount: '/api/users/by-github/',
     githubCompanyCommits: '/api/github/company-commits',
 <<<<<<< HEAD
+<<<<<<< HEAD
     githubCommitSummaries: '/api/github/commit-summaries',
     githubLiveCommits: '/api/github/live-commits'
+=======
+    githubCommitSummaries: '/api/github/commit-summaries'
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
 =======
     githubCommitSummaries: '/api/github/commit-summaries'
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23

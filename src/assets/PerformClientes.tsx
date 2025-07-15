@@ -1,5 +1,9 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { useState, useEffect, useRef } from 'react';
+=======
+import { useState, useEffect } from 'react';
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
 =======
 import { useState, useEffect } from 'react';
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
@@ -33,11 +37,14 @@ export default function PerformClientes() {
   const [githubUserCommits, setGithubUserCommits] = useState<any[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
 <<<<<<< HEAD
+<<<<<<< HEAD
   const commitsGeneratedRef = useRef<string | null>(null);
   const [detailedAISummaries, setDetailedAISummaries] = useState<{[key: string]: string}>({});
   const [loadingDetailedSummary, setLoadingDetailedSummary] = useState<{[key: string]: boolean}>({});
   const [showDetailedSummary, setShowDetailedSummary] = useState<{[key: string]: boolean}>({});
   const [currentRepoInfo, setCurrentRepoInfo] = useState<{owner: string; repo: string} | null>(null);
+=======
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
 =======
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
 
@@ -60,6 +67,7 @@ export default function PerformClientes() {
     fetchProjects();
   }, []);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -144,6 +152,8 @@ export default function PerformClientes() {
   };
 
 
+=======
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
 =======
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
   useEffect(() => {
@@ -432,9 +442,13 @@ export default function PerformClientes() {
   useEffect(() => {
     if (selectedProject) {
 <<<<<<< HEAD
+<<<<<<< HEAD
       axios.get(createApiUrl(apiConfig.endpoints.projectId), {
         params: { name: selectedProject }
       })
+=======
+      axios.get(createApiUrl(apiConfig.endpoints.projectId + '/' + encodeURIComponent(selectedProject)))
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
 =======
       axios.get(createApiUrl(apiConfig.endpoints.projectId + '/' + encodeURIComponent(selectedProject)))
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
@@ -449,6 +463,7 @@ export default function PerformClientes() {
   }, [selectedProject]);
 
   useEffect(() => {
+<<<<<<< HEAD
 <<<<<<< HEAD
     if (activeView === 'GitHub' && selectedProjectId && teamMembers.length > 0) {
       console.log('🔍 Fetching live commits for project ID:', selectedProjectId);
@@ -488,6 +503,8 @@ export default function PerformClientes() {
           });
           
 =======
+=======
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
     if (activeView === 'GitHub' && selectedProjectId) {
       console.log('🔍 Fetching commits for project ID:', selectedProjectId);
       console.log('📍 API URL:', createApiUrl(apiConfig.endpoints.githubCommitSummaries));
@@ -511,12 +528,16 @@ export default function PerformClientes() {
               commits: res.data[0].commits ? res.data[0].commits.length : 'no commits'
             } : 'no items'
           });
+<<<<<<< HEAD
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
+=======
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
           if (!Array.isArray(res.data)) {
             console.warn('⚠️ Response data is not an array:', res.data);
             setGithubUserCommits([]);
             return;
           }
+<<<<<<< HEAD
 <<<<<<< HEAD
           
           if (res.data.length === 0) {
@@ -607,6 +628,8 @@ export default function PerformClientes() {
     }
   }, [activeView, selectedProjectId, teamMembers]);
 =======
+=======
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
           if (res.data.length === 0) {
             console.warn('⚠️ Response data is empty array');
           }
@@ -624,6 +647,9 @@ export default function PerformClientes() {
         });
     }
   }, [activeView, selectedProjectId]);
+<<<<<<< HEAD
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
+=======
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
 
   // Top-level render log
@@ -631,6 +657,7 @@ export default function PerformClientes() {
     activeView,
     selectedProject,
     selectedMember,
+<<<<<<< HEAD
 <<<<<<< HEAD
     githubUserCommitsCount: githubUserCommits.length,
     githubUserCommitsData: githubUserCommits.map(u => ({
@@ -641,6 +668,9 @@ export default function PerformClientes() {
     teamMembersCount: teamMembers.length,
     showMemberModal,
     renderTimestamp: Date.now()
+=======
+    githubUserCommitsCount: githubUserCommits.length
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
 =======
     githubUserCommitsCount: githubUserCommits.length
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
@@ -944,7 +974,11 @@ export default function PerformClientes() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
 <<<<<<< HEAD
+<<<<<<< HEAD
               className="bg-white rounded-2xl shadow-2xl w-[500px] max-w-4xl lg:w-full md:w-[800px] sm:w-[600px] overflow-hidden"
+=======
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
 =======
               className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
@@ -975,7 +1009,11 @@ export default function PerformClientes() {
                 </div>
                 <div>
 <<<<<<< HEAD
+<<<<<<< HEAD
                   <p className="text-lg">Total de Horas no Projeto: <span className="font-bold">{selectedMember.hours.toFixed(2)} H</span></p>
+=======
+                  <p className="text-lg">Total de Horas no Projeto: <span className="font-bold">{selectedMember.hours.toFixed(2)}</span></p>
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
 =======
                   <p className="text-lg">Total de Horas no Projeto: <span className="font-bold">{selectedMember.hours.toFixed(2)}</span></p>
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
@@ -983,6 +1021,7 @@ export default function PerformClientes() {
                 {activeView === 'GitHub' && (
                   <div className="pt-4 border-t mt-4">
                     {(() => {
+<<<<<<< HEAD
 <<<<<<< HEAD
                       const filteredCommits = githubUserCommits.filter(user => user.user?.user_id === selectedMember.user_id);
                       console.log('🔍 Modal GitHub section debug:', {
@@ -1004,6 +1043,8 @@ export default function PerformClientes() {
                           hasDuplicates: githubUserCommits.map(u => u.user?.user_id).length !== [...new Set(githubUserCommits.map(u => u.user?.user_id))].length
                         }
 =======
+=======
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
                       console.log('🔍 Modal GitHub section:', {
                         hasCommits: githubUserCommits.length > 0,
                         selectedMemberId: selectedMember.user_id,
@@ -1013,11 +1054,15 @@ export default function PerformClientes() {
                           name: `${u.user?.First_Name} ${u.user?.Last_Name}`,
                           commitCount: u.commits?.length || 0
                         }))
+<<<<<<< HEAD
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
+=======
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
                       });
                       return null;
                     })()}
                     {githubUserCommits.length > 0 ? (
+<<<<<<< HEAD
 <<<<<<< HEAD
                       <div style={{ height: '300px', overflow: 'scroll' }}>
                         <h4 className="font-bold text-blue-700 mb-2">GitHub Commits</h4>
@@ -1126,6 +1171,8 @@ export default function PerformClientes() {
                           });
                         })()}
 =======
+=======
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
                       <div>
                         <h4 className="font-bold text-blue-700 mb-2">GitHub Commits for Selected Member</h4>
                         {githubUserCommits
@@ -1152,6 +1199,9 @@ export default function PerformClientes() {
                             </ul>
                           </div>
                         ))}
+<<<<<<< HEAD
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
+=======
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
                       </div>
                     ) : (

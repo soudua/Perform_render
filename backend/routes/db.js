@@ -173,8 +173,11 @@ export async function initDb() {
         console.log('Created absences table');
       }
 <<<<<<< HEAD
+<<<<<<< HEAD
       
 
+=======
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
 =======
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
     }

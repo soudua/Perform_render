@@ -739,6 +739,7 @@ router.get('/commit-summaries', async (req, res) => {
 });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // GET /api/github/live-commits?owner=OWNER&repo=REPO&project_id=PROJECT_ID
 router.get('/live-commits', async (req, res) => {
   const { owner, repo, project_id } = req.query;
@@ -893,6 +894,8 @@ router.get('/live-commits', async (req, res) => {
   }
 });
 
+=======
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
 =======
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
 export default router;

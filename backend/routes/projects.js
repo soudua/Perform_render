@@ -32,6 +32,7 @@ router.get('/with-github', async (req, res) => {
 });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // GET /api/projects/github-info/:projectId - returns GitHub repo info for a project
 router.get('/github-info/:projectId', async (req, res) => {
   const { projectId } = req.params;
@@ -72,6 +73,8 @@ router.get('/github-info/:projectId', async (req, res) => {
   }
 });
 
+=======
+>>>>>>> a821190cc079edae23ece64029e4045423e88c23
 =======
 >>>>>>> a821190cc079edae23ece64029e4045423e88c23
 export default router;
