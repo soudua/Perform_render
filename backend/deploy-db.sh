@@ -77,8 +77,13 @@ echo "🔄 Running database migrations..."
 COLUMN_EXISTS=$(sqlite3 "$DB_PATH" "PRAGMA table_info(utilizadores);" | grep -c "github_account" || true)
 if [ "$COLUMN_EXISTS" -eq "0" ]; then
     echo "📝 Adding github_account column to utilizadores table..."
-    sqlite3 "$DB_PATH" "ALTER TABLE utilizadores ADD COLUMN github_account TEXT;"
+    sqlite3 "$DB_PATH" "ALTER TABLE utilizadores ADD COLUMN github_account TEXT DEFAULT NULL;"
     echo "✅ github_account column added successfully"
+    
+    # Set default GitHub account for admin user
+    echo "🔧 Setting default GitHub account for admin user..."
+    sqlite3 "$DB_PATH" "UPDATE utilizadores SET github_account = 'soudua' WHERE user_id = 1;"
+    echo "✅ Default GitHub account set for admin user"
 else
     echo "✅ github_account column already exists"
 fi

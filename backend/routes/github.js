@@ -200,6 +200,16 @@ router.get('/user-account', authenticateToken, async (req, res) => {
     try {
         const db = await getDb();
         const userId = req.user.id; // Get the authenticated user's ID
+        
+        // First check if github_account column exists
+        const columns = await db.all("PRAGMA table_info(utilizadores)");
+        const hasGithubColumn = columns.some(col => col.name === 'github_account');
+        
+        if (!hasGithubColumn) {
+            console.log('GitHub account column does not exist yet. Migration needed.');
+            return res.status(404).json({ error: 'GitHub integration not yet configured. Please contact admin.' });
+        }
+        
         const user = await db.get('SELECT github_account FROM utilizadores WHERE user_id = ?', [userId]);
         
         // Log the retrieved user and account for debugging
@@ -232,6 +242,15 @@ router.put('/user-account', authenticateToken, async (req, res) => {
         
         if (!github_account) {
             return res.status(400).json({ error: 'GitHub account is required' });
+        }
+        
+        // First check if github_account column exists
+        const columns = await db.all("PRAGMA table_info(utilizadores)");
+        const hasGithubColumn = columns.some(col => col.name === 'github_account');
+        
+        if (!hasGithubColumn) {
+            console.log('GitHub account column does not exist yet. Migration needed.');
+            return res.status(500).json({ error: 'GitHub integration not yet configured. Please contact admin.' });
         }
         
         // Clean up the GitHub account (remove trailing slashes, etc.)
