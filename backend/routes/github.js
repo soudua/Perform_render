@@ -2,8 +2,28 @@ import express from 'express';
 import { Octokit } from '@octokit/rest';
 import { getDb } from './db.js';
 import axios from 'axios';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'REPLACE_WITH_A_STRONG_SECRET';
+
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
+};
 
 // Initialize GitHub client
 let octokit = null;
@@ -176,13 +196,14 @@ router.get('/branches/:owner/:repo', async (req, res) => {
 });
 
 // Get user's GitHub account from the database
-router.get('/user-account', async (req, res) => {
+router.get('/user-account', authenticateToken, async (req, res) => {
     try {
         const db = await getDb();
-        const user = await db.get('SELECT github_account FROM utilizadores WHERE user_id = ?', [67]);
+        const userId = req.user.id; // Get the authenticated user's ID
+        const user = await db.get('SELECT github_account FROM utilizadores WHERE user_id = ?', [userId]);
         
         // Log the retrieved user and account for debugging
-        console.log('Database query result for user_id 67:', user);
+        console.log(`Database query result for user_id ${userId}:`, user);
 
         if (user && user.github_account) {
             let githubAccount = user.github_account;
@@ -193,12 +214,40 @@ router.get('/user-account', async (req, res) => {
             console.log('Found and formatted GitHub account:', githubAccount);
             res.json({ github_account: githubAccount });
         } else {
-            console.log('GitHub account not found for user_id 67.');
+            console.log(`GitHub account not found for user_id ${userId}.`);
             res.status(404).json({ error: 'GitHub account not found for this user.' });
         }
     } catch (error) {
         console.error('Failed to fetch GitHub account:', error);
         res.status(500).json({ error: 'Failed to fetch GitHub account from database.' });
+    }
+});
+
+// Update user's GitHub account
+router.put('/user-account', authenticateToken, async (req, res) => {
+    try {
+        const db = await getDb();
+        const userId = req.user.id;
+        const { github_account } = req.body;
+        
+        if (!github_account) {
+            return res.status(400).json({ error: 'GitHub account is required' });
+        }
+        
+        // Clean up the GitHub account (remove trailing slashes, etc.)
+        let cleanAccount = github_account.trim();
+        if (cleanAccount.endsWith('/')) {
+            cleanAccount = cleanAccount.slice(0, -1);
+        }
+        
+        // Update the user's GitHub account
+        await db.run('UPDATE utilizadores SET github_account = ? WHERE user_id = ?', [cleanAccount, userId]);
+        
+        console.log(`Updated GitHub account for user_id ${userId}:`, cleanAccount);
+        res.json({ message: 'GitHub account updated successfully', github_account: cleanAccount });
+    } catch (error) {
+        console.error('Failed to update GitHub account:', error);
+        res.status(500).json({ error: 'Failed to update GitHub account' });
     }
 });
 

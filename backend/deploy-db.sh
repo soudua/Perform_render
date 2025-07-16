@@ -69,3 +69,18 @@ else
 fi
 
 echo "✅ Database deployment completed"
+
+# Run migrations to ensure database schema is up to date
+echo "🔄 Running database migrations..."
+
+# Check if github_account column exists and add it if missing
+COLUMN_EXISTS=$(sqlite3 "$DB_PATH" "PRAGMA table_info(utilizadores);" | grep -c "github_account" || true)
+if [ "$COLUMN_EXISTS" -eq "0" ]; then
+    echo "📝 Adding github_account column to utilizadores table..."
+    sqlite3 "$DB_PATH" "ALTER TABLE utilizadores ADD COLUMN github_account TEXT;"
+    echo "✅ github_account column added successfully"
+else
+    echo "✅ github_account column already exists"
+fi
+
+echo "✅ Database migrations completed"

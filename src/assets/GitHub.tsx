@@ -110,8 +110,19 @@ function GitHub() {
     setLoading(true);
     setError('');
     try {
+      // Get authentication token
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        setError('Authentication required. Please log in.');
+        return;
+      }
+
       // First, get the github_account from the database
-      const userResponse = await axios.get(createApiUrl(apiConfig.endpoints.githubUserAccount));
+      const userResponse = await axios.get(createApiUrl(apiConfig.endpoints.githubUserAccount), {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
       const githubAccount = userResponse.data.github_account;
 
       if (githubAccount) {
@@ -121,10 +132,18 @@ function GitHub() {
         });
         setCompanyRepositories(repoResponse.data.items || []);
       } else {
-        setError('GitHub account for user not found.');
+        setError('GitHub account not configured for this user. Please contact admin to set up your GitHub account.');
+        setCompanyRepositories([]);
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to fetch company repositories');
+      if (err.response?.status === 404) {
+        setError('GitHub account not configured for this user. Please contact admin to set up your GitHub account.');
+      } else if (err.response?.status === 401 || err.response?.status === 403) {
+        setError('Authentication failed. Please log in again.');
+      } else {
+        setError(err.response?.data?.error || 'Failed to fetch company repositories');
+      }
+      setCompanyRepositories([]);
     } finally {
       setLoading(false);
     }

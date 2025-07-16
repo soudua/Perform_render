@@ -11,9 +11,10 @@ CREATE TABLE utilizadores (
   rate_id REAL,
   active BOOLEAN,
   created_at TIMESTAMP,
-  updated_at TIMESTAMP
+  updated_at TIMESTAMP,
+  github_account TEXT
 );
-INSERT INTO utilizadores VALUES(1,'Admin','Local','suporte@grupoerre.pt','$2b$10$HspYWOPWVu.g8Rhvn1Qs6.9Wp02FJpp9JF9W7axEff.iXW0/InViq','admin','[''Admin'']',5.0,1,'2025-03-05T16:14:51.456181','2025-05-16 09:58:36');
+INSERT INTO utilizadores VALUES(1,'Admin','Local','suporte@grupoerre.pt','$2b$10$HspYWOPWVu.g8Rhvn1Qs6.9Wp02FJpp9JF9W7axEff.iXW0/InViq','admin','[''Admin'']',5.0,1,'2025-03-05T16:14:51.456181','2025-05-16 09:58:36','soudua');
 INSERT INTO utilizadores VALUES(2,'Alexandre','Fernandes','alexandrefernandes@lrb.pt','$2b$10$NPN3EDmYnpKNBeHY74qdKO0puLcbmu1H/k8Ayeh9NvmjQOXfw1DyS','user','[''LRB'']',2.0,1,'2025-03-05T16:14:51.456181','2025-05-16 09:58:36');
 INSERT INTO utilizadores VALUES(3,'Andreia','Ferreira','andreiaferreira@designstation.pt','$2b$10$NPN3EDmYnpKNBeHY74qdKO0puLcbmu1H/k8Ayeh9NvmjQOXfw1DyS','admin','[''Admin'']',3.0,1,'2025-03-05T16:14:51.456181','2025-05-16 09:58:36');
 INSERT INTO utilizadores VALUES(4,'Alexandre','Gon??alves','alexandregoncalves@designstation.pt','$2b$10$NPN3EDmYnpKNBeHY74qdKO0puLcbmu1H/k8Ayeh9NvmjQOXfw1DyS','user','[''Design'']',4.0,1,'2025-03-05T16:14:51.456181','2025-05-16 09:58:36');
