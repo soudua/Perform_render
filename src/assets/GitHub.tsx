@@ -117,31 +117,56 @@ function GitHub() {
         return;
       }
 
+      console.log('🔍 Fetching GitHub account from database...');
+      
       // First, get the github_account from the database
       const userResponse = await axios.get(createApiUrl(apiConfig.endpoints.githubUserAccount), {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
+      
+      console.log('✅ GitHub account response:', userResponse.data);
       const githubAccount = userResponse.data.github_account;
 
       if (githubAccount) {
+        console.log(`🔗 Using GitHub account: ${githubAccount}`);
+        
         // Then, search for repositories from that user
         const repoResponse = await axios.get(createApiUrl(apiConfig.endpoints.githubSearchRepos), {
           params: { q: `user:${githubAccount}`, token }
         });
+        
+        console.log(`📦 Found ${repoResponse.data.items?.length || 0} repositories`);
         setCompanyRepositories(repoResponse.data.items || []);
       } else {
         setError('GitHub account not configured for this user. Please contact admin to set up your GitHub account.');
         setCompanyRepositories([]);
       }
     } catch (err: any) {
+      console.error('❌ Error fetching company repositories:', err);
+      
       if (err.response?.status === 404) {
-        setError('GitHub account not configured for this user. Please contact admin to set up your GitHub account.');
+        const errorData = err.response.data;
+        if (errorData.debug) {
+          console.log('🔍 Debug info:', errorData.debug);
+          
+          if (!errorData.debug.column_exists) {
+            setError('GitHub integration not yet configured on server. Please contact admin to enable GitHub features.');
+          } else if (!errorData.debug.github_account_set) {
+            setError(`GitHub account not configured for your user account (${errorData.debug.user_name || 'Unknown User'}). Please contact admin to set up your GitHub account.`);
+          } else {
+            setError('GitHub account not found for this user. Please contact admin to set up your GitHub account.');
+          }
+        } else {
+          setError('GitHub account not configured for this user. Please contact admin to set up your GitHub account.');
+        }
       } else if (err.response?.status === 401 || err.response?.status === 403) {
         setError('Authentication failed. Please log in again.');
+        // Clear auth token if it's invalid
+        localStorage.removeItem('authToken');
       } else {
-        setError(err.response?.data?.error || 'Failed to fetch company repositories');
+        setError(err.response?.data?.error || 'Failed to fetch company repositories. Please try again.');
       }
       setCompanyRepositories([]);
     } finally {

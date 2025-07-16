@@ -201,35 +201,73 @@ router.get('/user-account', authenticateToken, async (req, res) => {
         const db = await getDb();
         const userId = req.user.id; // Get the authenticated user's ID
         
+        console.log(`🔍 Fetching GitHub account for user_id: ${userId}`);
+        console.log(`🔑 JWT payload:`, req.user);
+        
         // First check if github_account column exists
         const columns = await db.all("PRAGMA table_info(utilizadores)");
         const hasGithubColumn = columns.some(col => col.name === 'github_account');
         
+        console.log(`📊 Database columns:`, columns.map(c => c.name));
+        console.log(`✅ github_account column exists: ${hasGithubColumn}`);
+        
         if (!hasGithubColumn) {
-            console.log('GitHub account column does not exist yet. Migration needed.');
-            return res.status(404).json({ error: 'GitHub integration not yet configured. Please contact admin.' });
+            console.log('❌ GitHub account column does not exist yet. Migration needed.');
+            return res.status(404).json({ 
+                error: 'GitHub integration not yet configured. Please contact admin.',
+                debug: {
+                    column_exists: false,
+                    available_columns: columns.map(c => c.name)
+                }
+            });
         }
         
-        const user = await db.get('SELECT github_account FROM utilizadores WHERE user_id = ?', [userId]);
+        // Get user details including github_account
+        const user = await db.get('SELECT user_id, First_Name, Last_Name, email, github_account FROM utilizadores WHERE user_id = ?', [userId]);
         
         // Log the retrieved user and account for debugging
-        console.log(`Database query result for user_id ${userId}:`, user);
+        console.log(`📄 Database query result for user_id ${userId}:`, user);
 
-        if (user && user.github_account) {
-            let githubAccount = user.github_account;
-            // Remove trailing slash if it exists
-            if (githubAccount.endsWith('/')) {
-                githubAccount = githubAccount.slice(0, -1);
+        if (user) {
+            if (user.github_account) {
+                let githubAccount = user.github_account;
+                // Remove trailing slash if it exists
+                if (githubAccount.endsWith('/')) {
+                    githubAccount = githubAccount.slice(0, -1);
+                }
+                console.log('✅ Found and formatted GitHub account:', githubAccount);
+                res.json({ github_account: githubAccount });
+            } else {
+                console.log(`⚠️  GitHub account not set for user_id ${userId} (${user.First_Name} ${user.Last_Name})`);
+                res.status(404).json({ 
+                    error: 'GitHub account not configured for this user. Please contact admin to set up your GitHub account.',
+                    debug: {
+                        user_found: true,
+                        user_id: userId,
+                        user_name: `${user.First_Name} ${user.Last_Name}`,
+                        github_account_set: false
+                    }
+                });
             }
-            console.log('Found and formatted GitHub account:', githubAccount);
-            res.json({ github_account: githubAccount });
         } else {
-            console.log(`GitHub account not found for user_id ${userId}.`);
-            res.status(404).json({ error: 'GitHub account not found for this user.' });
+            console.log(`❌ User not found for user_id ${userId}`);
+            res.status(404).json({ 
+                error: 'User not found in database.',
+                debug: {
+                    user_found: false,
+                    user_id: userId
+                }
+            });
         }
     } catch (error) {
-        console.error('Failed to fetch GitHub account:', error);
-        res.status(500).json({ error: 'Failed to fetch GitHub account from database.' });
+        console.error('❌ Failed to fetch GitHub account:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch GitHub account from database.',
+            debug: {
+                error_message: error.message,
+                user_id: req.user?.id
+            }
+        });
     }
 });
 
@@ -958,6 +996,90 @@ router.get('/live-commits', async (req, res) => {
     
     res.json(mockData);
   }
+});
+
+// Admin endpoint to view all users and their GitHub accounts (for debugging)
+router.get('/admin/users', authenticateToken, async (req, res) => {
+    try {
+        const db = await getDb();
+        
+        // Check if user is admin (basic check)
+        const user = await db.get('SELECT role FROM utilizadores WHERE user_id = ?', [req.user.id]);
+        if (!user || user.role !== 'admin') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+        
+        // Get all users with their GitHub accounts
+        const users = await db.all(`
+            SELECT user_id, First_Name, Last_Name, email, github_account, active, role
+            FROM utilizadores 
+            WHERE active = 1 
+            ORDER BY user_id
+        `);
+        
+        console.log(`📊 Admin requested user list. Found ${users.length} active users`);
+        res.json({ 
+            users: users.map(u => ({
+                id: u.user_id,
+                name: `${u.First_Name} ${u.Last_Name}`,
+                email: u.email,
+                github_account: u.github_account || null,
+                role: u.role,
+                github_configured: !!u.github_account
+            }))
+        });
+    } catch (error) {
+        console.error('❌ Failed to fetch users list:', error);
+        res.status(500).json({ error: 'Failed to fetch users list' });
+    }
+});
+
+// Admin endpoint to set GitHub account for any user
+router.put('/admin/users/:userId/github', authenticateToken, async (req, res) => {
+    try {
+        const db = await getDb();
+        
+        // Check if user is admin
+        const user = await db.get('SELECT role FROM utilizadores WHERE user_id = ?', [req.user.id]);
+        if (!user || user.role !== 'admin') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+        
+        const targetUserId = req.params.userId;
+        const { github_account } = req.body;
+        
+        if (!github_account) {
+            return res.status(400).json({ error: 'GitHub account is required' });
+        }
+        
+        // Clean up the GitHub account
+        let cleanAccount = github_account.trim();
+        if (cleanAccount.endsWith('/')) {
+            cleanAccount = cleanAccount.slice(0, -1);
+        }
+        
+        // Check if target user exists
+        const targetUser = await db.get('SELECT user_id, First_Name, Last_Name FROM utilizadores WHERE user_id = ?', [targetUserId]);
+        if (!targetUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Update the target user's GitHub account
+        await db.run('UPDATE utilizadores SET github_account = ? WHERE user_id = ?', [cleanAccount, targetUserId]);
+        
+        console.log(`🔧 Admin ${req.user.id} set GitHub account for user ${targetUserId} (${targetUser.First_Name} ${targetUser.Last_Name}): ${cleanAccount}`);
+        res.json({ 
+            message: 'GitHub account updated successfully',
+            user: {
+                id: targetUserId,
+                name: `${targetUser.First_Name} ${targetUser.Last_Name}`,
+                github_account: cleanAccount
+            }
+        });
+    } catch (error) {
+        console.error('❌ Failed to update user GitHub account:', error);
+        res.status(500).json({ error: 'Failed to update GitHub account' });
+    }
 });
 
 export default router;

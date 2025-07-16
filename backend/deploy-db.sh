@@ -78,14 +78,34 @@ COLUMN_EXISTS=$(sqlite3 "$DB_PATH" "PRAGMA table_info(utilizadores);" | grep -c 
 if [ "$COLUMN_EXISTS" -eq "0" ]; then
     echo "📝 Adding github_account column to utilizadores table..."
     sqlite3 "$DB_PATH" "ALTER TABLE utilizadores ADD COLUMN github_account TEXT DEFAULT NULL;"
-    echo "✅ github_account column added successfully"
     
-    # Set default GitHub account for admin user
-    echo "🔧 Setting default GitHub account for admin user..."
-    sqlite3 "$DB_PATH" "UPDATE utilizadores SET github_account = 'soudua' WHERE user_id = 1;"
-    echo "✅ Default GitHub account set for admin user"
+    if [ $? -eq 0 ]; then
+        echo "✅ github_account column added successfully"
+        
+        # Set default GitHub account for admin user (user_id = 1)
+        echo "🔧 Setting default GitHub account for admin user..."
+        sqlite3 "$DB_PATH" "UPDATE utilizadores SET github_account = 'soudua' WHERE user_id = 1;"
+        
+        # Also set GitHub accounts for other key users if they exist
+        sqlite3 "$DB_PATH" "UPDATE utilizadores SET github_account = 'soudua' WHERE email = 'suporte@grupoerre.pt';"
+        
+        echo "✅ Default GitHub account set for admin user"
+    else
+        echo "❌ Failed to add github_account column"
+        exit 1
+    fi
 else
     echo "✅ github_account column already exists"
+    
+    # Check if admin user has github_account set
+    ADMIN_GITHUB=$(sqlite3 "$DB_PATH" "SELECT github_account FROM utilizadores WHERE user_id = 1;" 2>/dev/null || echo "")
+    if [ -z "$ADMIN_GITHUB" ] || [ "$ADMIN_GITHUB" = "NULL" ]; then
+        echo "🔧 Setting GitHub account for admin user (was empty)..."
+        sqlite3 "$DB_PATH" "UPDATE utilizadores SET github_account = 'soudua' WHERE user_id = 1;"
+        echo "✅ Admin GitHub account updated"
+    else
+        echo "✅ Admin user already has GitHub account: $ADMIN_GITHUB"
+    fi
 fi
 
 echo "✅ Database migrations completed"
